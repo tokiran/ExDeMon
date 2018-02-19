@@ -2,10 +2,10 @@ package ch.cern.properties.source;
 
 import ch.cern.properties.Properties;
 import ch.cern.properties.source.types.ApiPropertiesSource;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
-
 
 public class ApiPropertiesSourceTest {
 	
@@ -20,23 +20,8 @@ public class ApiPropertiesSourceTest {
         ApiPropertiesSource apiprops = new ApiPropertiesSource();
         Properties props = apiprops.load();
         
-        System.out.println("PROPS:");
-        System.out.println(props);
+        assertEquals("rcount + wcount", props.get("metrics.define.tape_total_number_of_mounts.value"));
+        assertEquals("24h", props.get("metrics.define.tape_media_write_error.variables.count.expire"));
     }
 
-    /*@Test
-    public void fromJSON() {
-        String jsonString = "{\"metrics.schema.perf\":{"
-                        + "\"sources\":\"tape_logs\", "
-                        + "\"filter.attribute\":\"1234\"}"
-                        + "}";
-
-        JsonObject jsonObject = new JsonParser().parse(jsonString).getAsJsonObject();
-
-    Properties props = Properties.from(jsonObject);
-
-    assertEquals("tape_logs", props.get("metrics.schema.perf.sources"));
-    assertEquals("1234", props.get("metrics.schema.perf.filter.attribute"));
-    }*/
-	
 }
