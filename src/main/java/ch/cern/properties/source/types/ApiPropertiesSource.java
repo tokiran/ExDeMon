@@ -32,8 +32,6 @@ public class ApiPropertiesSource extends PropertiesSource {
         api_url = properties.getProperty("api");
         
         properties.confirmAllPropertiesUsed();
-        
-        System.out.println("CARGANDO AQUI");
     }
 
     @Override
@@ -41,10 +39,9 @@ public class ApiPropertiesSource extends PropertiesSource {
         Properties props = new Properties();
 
         try {
-            //props = loadFromUrl(props, "http://dbodtests.cern.ch:5000/api/v1/schemas");
-            //props = loadFromUrl(props, "http://dbodtests.cern.ch:5000/api/v1/metrics");
-            //props = loadFromUrl(props, "http://dbodtests.cern.ch:5000/api/v1/monitors");
+            loadSchemas(props);
             loadMetrics(props);
+            loadMonitors(props);
         } catch(Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace(System.err);
@@ -53,7 +50,7 @@ public class ApiPropertiesSource extends PropertiesSource {
         return props;
     }
     
-    private JsonObject loadFromUrl(String url) throws RuntimeException {
+    protected JsonObject loadFromUrl(String url) throws RuntimeException {
         Client client = Client.create();
         WebResource webResource = client.resource(url);
         ClientResponse response = webResource.get(ClientResponse.class);
@@ -63,30 +60,41 @@ public class ApiPropertiesSource extends PropertiesSource {
         }
 
         String output = response.getEntity(String.class);
-        System.out.println("Output from Server .... \n");
-        System.out.println(output);
-        //Properties fileProps = Properties.fromJson(output);
-        //props.putAll(fileProps);
-        System.out.println("LOADED!");
-        //return props;
         JsonParser jparser = new JsonParser();
         return jparser.parse(output).getAsJsonObject();
     }
     
-    private void loadMetrics(Properties props) throws Exception {
-        JsonParser jparser = new JsonParser();
-        
+    protected void loadMetrics(Properties props) throws Exception {
         JsonArray metrics = loadFromUrl("http://dbodtests.cern.ch:5000/api/v1/metrics").getAsJsonArray("metrics");
         Iterator<JsonElement> metricsItr = metrics.iterator();
         while (metricsItr.hasNext()) {
             JsonObject metric = metricsItr.next().getAsJsonObject();
             JsonObject jobject = new JsonObject();
             jobject.add("metrics.define." + metric.get("name").getAsString(), metric.getAsJsonObject("data"));
-            System.out.println("PARSED OBJECT: " + jobject);
             props.addFrom(jobject);
         }
-        
-        System.out.println(props);
+    }
+    
+    protected void loadSchemas(Properties props) throws Exception {
+        JsonArray schemas = loadFromUrl("http://dbodtests.cern.ch:5000/api/v1/schemas").getAsJsonArray("schemas");
+        Iterator<JsonElement> schemasItr = schemas.iterator();
+        while (schemasItr.hasNext()) {
+            JsonObject schema = schemasItr.next().getAsJsonObject();
+            JsonObject jobject = new JsonObject();
+            jobject.add("metrics.schema." + schema.get("name").getAsString(), schema.getAsJsonObject("data"));
+            props.addFrom(jobject);
+        }
+    }
+    
+    protected void loadMonitors(Properties props) throws Exception {
+        JsonArray monitors = loadFromUrl("http://dbodtests.cern.ch:5000/api/v1/monitors").getAsJsonArray("monitors");
+        Iterator<JsonElement> monitorsItr = monitors.iterator();
+        while (monitorsItr.hasNext()) {
+            JsonObject monitor = monitorsItr.next().getAsJsonObject();
+            JsonObject jobject = new JsonObject();
+            jobject.add("monitor." + monitor.get("name").getAsString(), monitor.getAsJsonObject("data"));
+            props.addFrom(jobject);
+        }
     }
 
 }
