@@ -1,14 +1,13 @@
 package ch.cern.properties.source.types;
 
 import ch.cern.properties.Properties;
-import ch.cern.properties.source.types.ApiPropertiesSource;
 import com.google.gson.JsonParser;
-import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 public class ApiPropertiesSourceTest {
     
@@ -250,6 +249,8 @@ public class ApiPropertiesSourceTest {
                                 "  ]" +
                                 "}";
     
+    private static String API_URL = "http://localhost:5000";
+    
     @Before
     public void setUp() throws Exception {
         Properties.initCache(null);
@@ -261,33 +262,22 @@ public class ApiPropertiesSourceTest {
         ApiPropertiesSource apiMock = spy(ApiPropertiesSource.class);
         
         JsonParser jparser = new JsonParser();
-        when(apiMock.loadFromUrl("http://dbodtests.cern.ch:5000/api/v1/schemas")).thenReturn(jparser.parse(schemaResp).getAsJsonObject());
-        when(apiMock.loadFromUrl("http://dbodtests.cern.ch:5000/api/v1/metrics")).thenReturn(jparser.parse(metricResp).getAsJsonObject());
-        when(apiMock.loadFromUrl("http://dbodtests.cern.ch:5000/api/v1/monitors")).thenReturn(jparser.parse(monitoResp).getAsJsonObject());
-
+        doReturn(jparser.parse(schemaResp).getAsJsonObject()).when(apiMock).loadFromUrl(API_URL + "/api/v1/schemas");
+        doReturn(jparser.parse(metricResp).getAsJsonObject()).when(apiMock).loadFromUrl(API_URL + "/api/v1/metrics");
+        doReturn(jparser.parse(monitoResp).getAsJsonObject()).when(apiMock).loadFromUrl(API_URL + "/api/v1/monitors");
+        
+        Properties properties = new Properties();
+        properties.put("url", API_URL);
+        apiMock.config(properties);
         Properties props = apiMock.load();
         
-        assertEquals("drive_consec_failed_reqs", props.get("metrics.define.drive_consec_failed_reqs.metrics.attribute.$defined_metric"));
-        assertEquals("$owner $environment hostname", props.get("metrics.define.perf-missing.metrics.groupby"));
+        assertEquals("drive_consec_failed_reqs", props.get("metrics.define.tape_qa_drive_consec_failed_reqs.metrics.attribute.$defined_metric"));
+        assertEquals("$owner $environment hostname", props.get("metrics.define.tape_qa_perf-missing.metrics.groupby"));
         
-        assertEquals("data.timestamp", props.get("metrics.schema.perf.timestamp.key"));
-        assertEquals("#qa", props.get("metrics.schema.tapeserverd-count.attributes.$environment"));
+        assertEquals("data.timestamp", props.get("metrics.schema.tape_qa_perf.timestamp.key"));
+        assertEquals("#qa", props.get("metrics.schema.tape_qa_tapeserverd-count.attributes.$environment"));
         
-        assertEquals("0", props.get("monitor.perf-missing.analysis.error.lowerbound"));
-        assertEquals("production", props.get("monitor.tapeserverd-missing.notificator.errors.filter.attribute.$environment"));
+        assertEquals("0", props.get("monitor.tape_qa_perf-missing.analysis.error.lowerbound"));
+        assertEquals("production", props.get("monitor.tape_qa_tapeserverd-missing.notificator.errors.filter.attribute.$environment"));
     }
-
 }
-
-/*
-@Test
-public void testmultiplicarSumar() {
- 
-ServicioA servicioA=mock(ServicioA.class);
-when(servicioA.sumar(2,3)).thenReturn(5);
- 
-ServicioB servicioB= new ServicioBImpl();
-servicioB.setServicioA(servicioA);
-Assert.assertEquals(servicioB.multiplicarSumar(2, 3, 2),10);
- 
-}*/
